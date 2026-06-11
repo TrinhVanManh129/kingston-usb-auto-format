@@ -6,6 +6,7 @@ $ErrorActionPreference = 'Stop'
 
 $root = $PSScriptRoot
 $dist = Join-Path $root 'dist'
+$publishTemp = Join-Path $root '.publish-temp'
 $expectedDist = [System.IO.Path]::GetFullPath((Join-Path $root 'dist'))
 $resolvedRoot = [System.IO.Path]::GetFullPath($root)
 
@@ -13,8 +14,8 @@ if (-not $expectedDist.StartsWith($resolvedRoot + [System.IO.Path]::DirectorySep
     throw "Unsafe dist path: $expectedDist"
 }
 
-if (Test-Path -LiteralPath $dist) {
-    Remove-Item -LiteralPath $dist -Recurse -Force
+if (Test-Path -LiteralPath $publishTemp) {
+    Remove-Item -LiteralPath $publishTemp -Recurse -Force
 }
 
 Write-Host 'Running tests...'
@@ -23,7 +24,7 @@ if ($LASTEXITCODE -ne 0) {
     throw "Tests failed with exit code $LASTEXITCODE."
 }
 
-$output = Join-Path $dist 'win-x64'
+$output = $publishTemp
 Write-Host 'Publishing self-contained single-file EXE...'
 dotnet publish (Join-Path $root 'src\CompanyUsbFormatter\CompanyUsbFormatter.csproj') `
     -c Release `
@@ -46,10 +47,16 @@ if (-not (Test-Path -LiteralPath $exe)) {
     throw "Published EXE was not found: $exe"
 }
 
-$hash = Get-FileHash -LiteralPath $exe -Algorithm SHA256
-$size = (Get-Item -LiteralPath $exe).Length
+$releaseDirectory = Join-Path $dist 'win-x64'
+$releaseExe = Join-Path $releaseDirectory 'KingstonUsbFormatter.exe'
+New-Item -ItemType Directory -Path $releaseDirectory -Force | Out-Null
+Copy-Item -LiteralPath $exe -Destination $releaseExe -Force
+
+$hash = Get-FileHash -LiteralPath $releaseExe -Algorithm SHA256
+$size = (Get-Item -LiteralPath $releaseExe).Length
+Remove-Item -LiteralPath $publishTemp -Recurse -Force
 
 Write-Host ''
-Write-Host "Build complete: $exe"
+Write-Host "Build complete: $releaseExe"
 Write-Host "Size: $size bytes"
 Write-Host "SHA256: $($hash.Hash)"

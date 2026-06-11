@@ -21,6 +21,9 @@ var tests = new (string Name, Action Run)[]
     ("completes a verified format", () => CompletesVerifiedFormat().GetAwaiter().GetResult()),
     ("parses PowerShell disk JSON", ParsesPowerShellDiskJson),
     ("generates constrained DiskPart script", GeneratesDiskPartScript),
+    ("generates NTFS DiskPart script", GeneratesNtfsDiskPartScript),
+    ("generates FAT32 DiskPart script", GeneratesFat32DiskPartScript),
+    ("rejects unsupported file system", RejectsUnsupportedFileSystem),
     ("deletes DiskPart temporary script after failure", () => DeletesTemporaryScriptAfterFailure().GetAwaiter().GetResult()),
     ("escapes CSV audit fields", EscapesCsvAuditFields),
 };
@@ -262,7 +265,27 @@ static void GeneratesDiskPartScript()
         "exit",
         string.Empty);
 
-    Equal(expected, DiskPartFormatter.BuildScript(3));
+    Equal(expected, DiskPartFormatter.BuildScript(3, UsbFileSystem.ExFat));
+}
+
+static void GeneratesNtfsDiskPartScript()
+{
+    Contains(
+        "format fs=ntfs quick label=COMPANY-USB",
+        DiskPartFormatter.BuildScript(3, UsbFileSystem.Ntfs));
+}
+
+static void GeneratesFat32DiskPartScript()
+{
+    Contains(
+        "format fs=fat32 quick label=COMPANY-USB",
+        DiskPartFormatter.BuildScript(3, UsbFileSystem.Fat32));
+}
+
+static void RejectsUnsupportedFileSystem()
+{
+    Throws<ArgumentOutOfRangeException>(() =>
+        DiskPartFormatter.BuildScript(3, (UsbFileSystem)999));
 }
 
 static async Task DeletesTemporaryScriptAfterFailure()
@@ -271,7 +294,7 @@ static async Task DeletesTemporaryScriptAfterFailure()
     var files = new FakeTemporaryFileStore();
     var formatter = new DiskPartFormatter(runner, files);
 
-    var result = await formatter.FormatAsExFatAsync(1, CancellationToken.None);
+    var result = await formatter.FormatAsync(1, UsbFileSystem.ExFat, CancellationToken.None);
 
     False(result.Succeeded);
     Equal(files.CreatedPath, files.DeletedPath);
@@ -325,6 +348,21 @@ static void False(bool value)
     }
 }
 
+static void Throws<TException>(Action action)
+    where TException : Exception
+{
+    try
+    {
+        action();
+    }
+    catch (TException)
+    {
+        return;
+    }
+
+    throw new InvalidOperationException($"Expected {typeof(TException).Name}.");
+}
+
 sealed class FakeInventory : IDiskInventory
 {
     private readonly IReadOnlyList<DiskInfo> _initial;
@@ -358,7 +396,10 @@ sealed class FakeFormatter : IDiskFormatter
 
     public bool WasCalled { get; private set; }
 
-    public Task<FormatResult> FormatAsExFatAsync(int diskNumber, CancellationToken cancellationToken)
+    public Task<FormatResult> FormatAsync(
+        int diskNumber,
+        UsbFileSystem fileSystem,
+        CancellationToken cancellationToken)
     {
         WasCalled = true;
         return Task.FromResult(_result);

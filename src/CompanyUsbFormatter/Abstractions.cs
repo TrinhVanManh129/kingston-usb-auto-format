@@ -9,7 +9,10 @@ public interface IDiskInventory
 
 public interface IDiskFormatter
 {
-    Task<FormatResult> FormatAsExFatAsync(int diskNumber, CancellationToken cancellationToken);
+    Task<FormatResult> FormatAsync(
+        int diskNumber,
+        UsbFileSystem fileSystem,
+        CancellationToken cancellationToken);
 }
 
 public interface IUserConsole

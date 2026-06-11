@@ -19,6 +19,10 @@ public sealed class MainForm : Form
     private readonly Button _refreshButton = new();
     private readonly Button _formatButton = new();
     private readonly TextBox _confirmationBox = new();
+    private readonly RadioButton _exFatOption = new();
+    private readonly RadioButton _ntfsOption = new();
+    private readonly RadioButton _fat32Option = new();
+    private readonly Label _fileSystemNote = new();
     private readonly Label _selectedTitle = new();
     private readonly Label _selectedDetails = new();
     private readonly Label _selectionBadge = new();
@@ -36,8 +40,8 @@ public sealed class MainForm : Form
 
         Text = "Kingston USB Formatter";
         StartPosition = FormStartPosition.CenterScreen;
-        MinimumSize = new Size(900, 650);
-        Size = new Size(980, 720);
+        MinimumSize = new Size(900, 890);
+        Size = new Size(980, 950);
         BackColor = Color.FromArgb(243, 246, 251);
         Font = new Font("Segoe UI", 10F);
         AutoScaleMode = AutoScaleMode.Dpi;
@@ -55,10 +59,10 @@ public sealed class MainForm : Form
             RowCount = 4,
             Padding = new Padding(28),
         };
-        root.RowStyles.Add(new RowStyle(SizeType.Absolute, 105));
-        root.RowStyles.Add(new RowStyle(SizeType.Percent, 55));
-        root.RowStyles.Add(new RowStyle(SizeType.Percent, 45));
-        root.RowStyles.Add(new RowStyle(SizeType.Absolute, 48));
+        root.RowStyles.Add(new RowStyle(SizeType.Absolute, 95));
+        root.RowStyles.Add(new RowStyle(SizeType.Absolute, 260));
+        root.RowStyles.Add(new RowStyle(SizeType.Percent, 100));
+        root.RowStyles.Add(new RowStyle(SizeType.Absolute, 42));
         Controls.Add(root);
 
         root.Controls.Add(BuildHeader(), 0, 0);
@@ -81,7 +85,7 @@ public sealed class MainForm : Form
         var subtitle = new Label
         {
             AutoSize = true,
-            Text = "Safely prepare removable USB drives as exFAT",
+            Text = "Safely prepare removable USB drives",
             Font = new Font("Segoe UI", 10.5F),
             ForeColor = Muted,
             Location = new Point(3, 54),
@@ -226,22 +230,50 @@ public sealed class MainForm : Form
         layout.Controls.Add(details, 0, 0);
 
         var action = new Panel { Dock = DockStyle.Fill, Padding = new Padding(15, 2, 0, 0) };
-        action.Controls.Add(new Label
+        var fileSystemLabel = new Label
+        {
+            AutoSize = true,
+            Text = "File system",
+            Font = new Font("Segoe UI Semibold", 10F),
+            ForeColor = Navy,
+            Location = new Point(0, 58),
+        };
+        action.Controls.Add(fileSystemLabel);
+
+        ConfigureFileSystemOption(_exFatOption, "exFAT  ·  Recommended", UsbFileSystem.ExFat, 0);
+        ConfigureFileSystemOption(_ntfsOption, "NTFS   ·  Windows only", UsbFileSystem.Ntfs, 29);
+        ConfigureFileSystemOption(_fat32Option, "FAT32  ·  Old devices (4 GB per file)", UsbFileSystem.Fat32, 58);
+        _exFatOption.Checked = true;
+        action.Controls.Add(_exFatOption);
+        action.Controls.Add(_ntfsOption);
+        action.Controls.Add(_fat32Option);
+
+        _fileSystemNote.AutoSize = false;
+        _fileSystemNote.Location = new Point(0, 174);
+        _fileSystemNote.Size = new Size(330, 42);
+        _fileSystemNote.ForeColor = Muted;
+        _fileSystemNote.Font = new Font("Segoe UI", 8.5F);
+        action.Controls.Add(_fileSystemNote);
+        UpdateFileSystemNote();
+
+        var confirmLabel = new Label
         {
             AutoSize = true,
             Text = "Confirm disk number",
             Font = new Font("Segoe UI Semibold", 10F),
             ForeColor = Navy,
-            Location = new Point(0, 0),
-        });
+            Location = new Point(0, 222),
+        };
+        action.Controls.Add(confirmLabel);
         action.Controls.Add(new Label
         {
             AutoSize = true,
             Text = "Enter the selected Disk number again.",
             ForeColor = Muted,
-            Location = new Point(0, 27),
+            Location = new Point(0, 249),
         });
-        _confirmationBox.Location = new Point(0, 60);
+
+        _confirmationBox.Location = new Point(0, 279);
         _confirmationBox.Size = new Size(315, 32);
         _confirmationBox.Font = new Font("Segoe UI Semibold", 12F);
         _confirmationBox.TextAlign = HorizontalAlignment.Center;
@@ -250,7 +282,7 @@ public sealed class MainForm : Form
         action.Controls.Add(_confirmationBox);
 
         ConfigureButton(_formatButton, "FORMAT USB", Red);
-        _formatButton.Location = new Point(0, 110);
+        _formatButton.Location = new Point(0, 327);
         _formatButton.Size = new Size(315, 48);
         _formatButton.Enabled = false;
         _formatButton.Click += async (_, _) => await FormatSelectedDiskAsync();
@@ -357,8 +389,10 @@ public sealed class MainForm : Form
         }
 
         var expected = _selectedDisk;
+        var selectedFileSystem = SelectedFileSystem;
         var warning = MessageBox.Show(
-            $"All data on Disk {expected.Number} ({expected.FriendlyName}) will be permanently deleted.\n\nContinue?",
+            $"All data on Disk {expected.Number} ({expected.FriendlyName}) will be permanently deleted.\n\n" +
+            $"File system: {selectedFileSystem.DisplayName()}\n\nContinue?",
             "Final confirmation",
             MessageBoxButtons.YesNo,
             MessageBoxIcon.Warning,
@@ -380,8 +414,10 @@ public sealed class MainForm : Form
                 throw new InvalidOperationException(rejection ?? "The selected USB drive changed after confirmation.");
             }
 
-            _statusLabel.Text = $"Formatting Disk {expected.Number} as exFAT...";
-            var result = await _formatter.FormatAsExFatAsync(expected.Number, CancellationToken.None);
+            var fileSystem = selectedFileSystem;
+            var fileSystemName = fileSystem.DisplayName();
+            _statusLabel.Text = $"Formatting Disk {expected.Number} as {fileSystemName}...";
+            var result = await _formatter.FormatAsync(expected.Number, fileSystem, CancellationToken.None);
             if (!result.Succeeded)
             {
                 await LogAsync(current!, "FORMAT_FAILED", string.Empty, result.Message);
@@ -390,20 +426,20 @@ public sealed class MainForm : Form
 
             var verified = await _inventory.GetDiskAsync(expected.Number, CancellationToken.None);
             var volume = verified?.Volumes.FirstOrDefault(item =>
-                string.Equals(item.FileSystem, "exFAT", StringComparison.OrdinalIgnoreCase)
+                string.Equals(item.FileSystem, fileSystemName, StringComparison.OrdinalIgnoreCase)
                 && string.Equals(item.Label, "COMPANY-USB", StringComparison.Ordinal));
             if (verified is null
                 || !DiskSafetyValidator.HasSameIdentity(current!, verified)
                 || volume is null)
             {
-                const string message = "The exFAT volume could not be verified after formatting.";
+                var message = $"The {fileSystemName} volume could not be verified after formatting.";
                 await LogAsync(verified ?? current!, "VERIFICATION_FAILED", string.Empty, message);
                 throw new InvalidOperationException(message);
             }
 
             await LogAsync(verified, "SUCCESS", volume.DriveLetter, result.Message);
             MessageBox.Show(
-                $"Disk {expected.Number} was formatted successfully.\nDrive: {volume.DriveLetter}:\\\nFile system: exFAT",
+                $"Disk {expected.Number} was formatted successfully.\nDrive: {volume.DriveLetter}:\\\nFile system: {fileSystemName}",
                 "Format complete",
                 MessageBoxButtons.OK,
                 MessageBoxIcon.Information);
@@ -461,6 +497,45 @@ public sealed class MainForm : Form
         _formatButton.Enabled = enabled;
         _formatButton.BackColor = enabled ? Red : Color.FromArgb(225, 229, 236);
         _formatButton.ForeColor = enabled ? Color.White : Color.FromArgb(112, 121, 135);
+    }
+
+    private UsbFileSystem SelectedFileSystem =>
+        _ntfsOption.Checked
+            ? UsbFileSystem.Ntfs
+            : _fat32Option.Checked
+                ? UsbFileSystem.Fat32
+                : UsbFileSystem.ExFat;
+
+    private void ConfigureFileSystemOption(
+        RadioButton option,
+        string text,
+        UsbFileSystem fileSystem,
+        int top)
+    {
+        option.AutoSize = true;
+        option.Text = text;
+        option.Tag = fileSystem;
+        option.Location = new Point(0, 85 + top);
+        option.ForeColor = Navy;
+        option.Font = new Font("Segoe UI", 9.5F);
+        option.CheckedChanged += (_, _) =>
+        {
+            if (option.Checked)
+            {
+                UpdateFileSystemNote();
+            }
+        };
+    }
+
+    private void UpdateFileSystemNote()
+    {
+        _fileSystemNote.Text = SelectedFileSystem switch
+        {
+            UsbFileSystem.ExFat => "Best default for modern Windows, macOS and large files.",
+            UsbFileSystem.Ntfs => "Best for Windows permissions and Windows-only workflows.",
+            UsbFileSystem.Fat32 => "Compatibility mode. Windows may reject FAT32 on drives larger than 32 GB.",
+            _ => string.Empty,
+        };
     }
 
     private static Panel CreateCard()

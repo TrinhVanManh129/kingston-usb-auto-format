@@ -13,8 +13,9 @@ public sealed class DiskPartFormatter : IDiskFormatter
         _temporaryFiles = temporaryFiles;
     }
 
-    public async Task<FormatResult> FormatAsExFatAsync(
+    public async Task<FormatResult> FormatAsync(
         int diskNumber,
+        UsbFileSystem fileSystem,
         CancellationToken cancellationToken)
     {
         if (diskNumber <= 0)
@@ -22,7 +23,7 @@ public sealed class DiskPartFormatter : IDiskFormatter
             return new FormatResult(false, "The disk number is not allowed.");
         }
 
-        var scriptPath = _temporaryFiles.Create(BuildScript(diskNumber));
+        var scriptPath = _temporaryFiles.Create(BuildScript(diskNumber, fileSystem));
         try
         {
             var result = await _runner.RunAsync(
@@ -52,13 +53,14 @@ public sealed class DiskPartFormatter : IDiskFormatter
         }
     }
 
-    public static string BuildScript(int diskNumber)
+    public static string BuildScript(int diskNumber, UsbFileSystem fileSystem)
     {
         if (diskNumber <= 0)
         {
             throw new ArgumentOutOfRangeException(nameof(diskNumber));
         }
 
+        var diskPartName = fileSystem.DiskPartName();
         return string.Join(
             Environment.NewLine,
             $"select disk {diskNumber}",
@@ -66,7 +68,7 @@ public sealed class DiskPartFormatter : IDiskFormatter
             "clean",
             "convert mbr",
             "create partition primary",
-            "format fs=exfat quick label=COMPANY-USB",
+            $"format fs={diskPartName} quick label=COMPANY-USB",
             "assign",
             "exit",
             string.Empty);

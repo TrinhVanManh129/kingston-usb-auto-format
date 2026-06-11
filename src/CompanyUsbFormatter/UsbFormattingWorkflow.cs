@@ -90,7 +90,7 @@ public sealed class UsbFormattingWorkflow
         }
 
         _console.WriteLine("Formatting USB disk as exFAT...");
-        var formatResult = await _formatter.FormatAsExFatAsync(diskNumber, cancellationToken);
+        var formatResult = await _formatter.FormatAsync(diskNumber, UsbFileSystem.ExFat, cancellationToken);
         if (!formatResult.Succeeded)
         {
             _console.WriteLine($"Formatting failed: {formatResult.Message}");

@@ -1,6 +1,6 @@
 # Kingston USB Auto Format
 
-Công cụ Windows có giao diện đồ họa dành cho kỹ thuật viên, dùng để định dạng USB thành `exFAT` theo quy trình có xác nhận và ghi nhật ký.
+Công cụ Windows có giao diện đồ họa dành cho kỹ thuật viên, dùng để định dạng USB theo quy trình có xác nhận và ghi nhật ký.
 
 > **CẢNH BÁO:** Thao tác định dạng sẽ xóa toàn bộ dữ liệu trên USB đã chọn. Công cụ này không thể khôi phục dữ liệu đã xóa.
 
@@ -11,10 +11,11 @@ Công cụ Windows có giao diện đồ họa dành cho kỹ thuật viên, dù
 - Chặn ổ đĩa được Windows đánh dấu `IsBoot` hoặc `IsSystem`.
 - Chặn ổ đĩa đang ngoại tuyến hoặc có dung lượng không hợp lệ.
 - Bắt buộc kỹ thuật viên chọn USB và nhập lại chính xác số `Disk` trước khi nút định dạng được bật.
+- Cho phép chọn `exFAT`, `NTFS` hoặc `FAT32`; mặc định là `exFAT`.
 - Đọc lại thông tin thiết bị sau khi xác nhận và hủy nếu model, serial, Windows Unique ID hoặc dung lượng thay đổi.
 - Không tự động định dạng khi cắm USB.
 - Không có tham số bỏ qua bước xác nhận.
-- Xác minh hệ thống tệp `exFAT` và nhãn `COMPANY-USB` sau khi DiskPart hoàn tất.
+- Xác minh đúng hệ thống tệp đã chọn và nhãn `COMPANY-USB` sau khi DiskPart hoàn tất.
 
 ## Cách sử dụng
 
@@ -22,15 +23,19 @@ Công cụ Windows có giao diện đồ họa dành cho kỹ thuật viên, dù
 2. Chấp nhận hộp thoại yêu cầu quyền Administrator của Windows.
 3. Chọn USB trong bảng thiết bị.
 4. Kiểm tra kỹ model, serial, dung lượng và ổ đĩa hiện tại.
-5. Nhập lại số `Disk` vào ô xác nhận, ví dụ `1`.
-6. Nhấn **FORMAT USB** và xác nhận cảnh báo cuối cùng.
-7. Chờ đến khi chương trình báo thành công và hiển thị ký tự ổ đĩa.
+5. Chọn hệ thống tệp:
+   - `exFAT`: khuyến nghị, tương thích rộng và hỗ trợ tệp lớn.
+   - `NTFS`: phù hợp với máy Windows.
+   - `FAT32`: dành cho thiết bị cũ, giới hạn mỗi tệp tối đa 4 GB. Windows có thể từ chối FAT32 trên USB lớn hơn 32 GB.
+6. Nhập lại số `Disk` vào ô xác nhận, ví dụ `1`.
+7. Nhấn **FORMAT USB** và xác nhận cảnh báo cuối cùng.
+8. Chờ đến khi chương trình báo thành công và hiển thị ký tự ổ đĩa.
 
 Kết quả mặc định:
 
 - Kiểu phân vùng: `MBR`
 - Một phân vùng chính sử dụng toàn bộ dung lượng
-- Hệ thống tệp: `exFAT`
+- Hệ thống tệp: lựa chọn trong giao diện, mặc định `exFAT`
 - Nhãn ổ đĩa: `COMPANY-USB`
 - Định dạng nhanh
 

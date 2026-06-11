@@ -3,3 +3,4 @@
 Logs/
 *.user
 dist/win-x64/CompanyUsbFormatter.exe
+.publish-temp/
