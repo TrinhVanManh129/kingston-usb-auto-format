@@ -1,122 +1,122 @@
-# Company USB Formatter
+# Kingston USB Auto Format
 
-Cong cu Windows danh cho ky thuat vien, dung de format USB thanh `exFAT` theo quy trinh co xac nhan va ghi log.
+Công cụ Windows dành cho kỹ thuật viên, dùng để định dạng USB thành `exFAT` theo quy trình có xác nhận và ghi nhật ký.
 
-> **CANH BAO:** Format se xoa toan bo du lieu tren USB da chon. Du lieu khong the khoi phuc bang cong cu nay.
+> **CẢNH BÁO:** Thao tác định dạng sẽ xóa toàn bộ dữ liệu trên USB đã chọn. Công cụ này không thể khôi phục dữ liệu đã xóa.
 
-## Tinh nang an toan
+## Tính năng an toàn
 
-- Chi hien va chap nhan disk co `BusType = USB`.
-- Chan tuyet doi `Disk 0`.
-- Chan disk duoc Windows danh dau `IsBoot` hoac `IsSystem`.
-- Chan disk offline hoac khong co dung luong hop le.
-- Bat ky thuat vien nhap so disk, sau do nhap chinh xac `FORMAT <so disk>`.
-- Doc lai thong tin thiet bi sau khi xac nhan va huy neu model, serial, Windows unique ID hoac dung luong thay doi.
-- Khong co che do tu dong format khi cam USB.
-- Khong co tham so bo qua buoc xac nhan.
-- Xac minh volume `exFAT` va nhan `COMPANY-USB` sau khi DiskPart ket thuc.
+- Chỉ hiển thị và chấp nhận ổ đĩa có `BusType = USB`.
+- Chặn tuyệt đối `Disk 0`.
+- Chặn ổ đĩa được Windows đánh dấu `IsBoot` hoặc `IsSystem`.
+- Chặn ổ đĩa đang ngoại tuyến hoặc có dung lượng không hợp lệ.
+- Bắt buộc kỹ thuật viên nhập số ổ đĩa, sau đó nhập chính xác `FORMAT <số ổ đĩa>`.
+- Đọc lại thông tin thiết bị sau khi xác nhận và hủy nếu model, serial, Windows Unique ID hoặc dung lượng thay đổi.
+- Không tự động định dạng khi cắm USB.
+- Không có tham số bỏ qua bước xác nhận.
+- Xác minh hệ thống tệp `exFAT` và nhãn `COMPANY-USB` sau khi DiskPart hoàn tất.
 
-## Su dung
+## Cách sử dụng
 
-1. Mo `CompanyUsbFormatter.exe`.
-2. Chap nhan hop thoai UAC Administrator.
-3. Xem ky model, serial va dung luong cua USB.
-4. Nhap so disk duoc hien thi.
-5. Nhap chinh xac chu xac nhan, vi du `FORMAT 1`.
-6. Cho den khi chuong trinh bao thanh cong va hien ky tu o dia.
+1. Mở `CompanyUsbFormatter.exe`.
+2. Chấp nhận hộp thoại yêu cầu quyền Administrator của Windows.
+3. Kiểm tra kỹ model, serial và dung lượng của USB.
+4. Nhập số ổ đĩa được hiển thị.
+5. Nhập chính xác chuỗi xác nhận, ví dụ `FORMAT 1`.
+6. Chờ đến khi chương trình báo thành công và hiển thị ký tự ổ đĩa.
 
-Ket qua mac dinh:
+Kết quả mặc định:
 
-- Partition style: `MBR`
-- Mot primary partition su dung toan bo dung luong
-- Filesystem: `exFAT`
-- Volume label: `COMPANY-USB`
-- Quick format
+- Kiểu phân vùng: `MBR`
+- Một phân vùng chính sử dụng toàn bộ dung lượng
+- Hệ thống tệp: `exFAT`
+- Nhãn ổ đĩa: `COMPANY-USB`
+- Định dạng nhanh
 
-## Log
+## Nhật ký
 
-Log CSV duoc ghi theo thang tai:
+Nhật ký CSV được ghi theo từng tháng tại:
 
 ```text
 %ProgramData%\CompanyUsbFormatter\Logs\YYYY-MM.csv
 ```
 
-Neu thu muc tren khong ghi duoc, chuong trinh dung thu muc `Logs` nam canh EXE.
+Nếu không thể ghi vào thư mục trên, chương trình sử dụng thư mục `Logs` nằm cạnh file EXE.
 
-Log gom thoi gian UTC, ten may, tai khoan Windows, disk number, model, serial, dung luong, ket qua, ky tu o dia va thong bao. Cong cu khong doc hay ghi ten tep noi dung tren USB vao log.
+Nhật ký gồm thời gian UTC, tên máy, tài khoản Windows, số ổ đĩa, model, serial, dung lượng, kết quả, ký tự ổ đĩa và thông báo. Công cụ không đọc hoặc ghi tên tệp trên USB vào nhật ký.
 
-## Ma thoat
+## Mã thoát
 
-| Ma | Y nghia |
+| Mã | Ý nghĩa |
 |---:|---|
-| 0 | Format va xac minh thanh cong |
-| 1 | Khong tim thay USB |
-| 2 | Lua chon disk khong hop le |
-| 3 | Nguoi dung huy |
-| 4 | Bi chan boi quy tac an toan |
-| 5 | DiskPart that bai |
-| 6 | Khong xac minh duoc volume sau format |
-| 10 | Loi khong mong doi |
+| 0 | Định dạng và xác minh thành công |
+| 1 | Không tìm thấy USB |
+| 2 | Lựa chọn ổ đĩa không hợp lệ |
+| 3 | Người dùng hủy thao tác |
+| 4 | Bị chặn bởi quy tắc an toàn |
+| 5 | DiskPart thất bại |
+| 6 | Không xác minh được ổ đĩa sau khi định dạng |
+| 10 | Lỗi không mong đợi |
 
-## Cau truc ma nguon
+## Cấu trúc mã nguồn
 
 ```text
 src/CompanyUsbFormatter/
-  Program.cs                  Entry point va ghep cac thanh phan
-  UsbFormattingWorkflow.cs    Luong chon, xac nhan, format, xac minh
-  DiskSafetyValidator.cs      Quy tac chong xoa nham
-  PowerShellDiskInventory.cs  Doc disk/volume tu Windows
-  DiskPartFormatter.cs        Tao va chay script DiskPart
-  AuditLogger.cs              Ghi log CSV
-  SystemCommandRunner.cs      Chay tien trinh co timeout
-  Abstractions.cs             Interface de test khong cham disk that
-  Models.cs                   Kieu du lieu
+  Program.cs                  Điểm khởi chạy và ghép các thành phần
+  UsbFormattingWorkflow.cs    Luồng chọn, xác nhận, định dạng và xác minh
+  DiskSafetyValidator.cs      Quy tắc chống xóa nhầm ổ đĩa
+  PowerShellDiskInventory.cs  Đọc thông tin ổ đĩa từ Windows
+  DiskPartFormatter.cs        Tạo và chạy tập lệnh DiskPart
+  AuditLogger.cs              Ghi nhật ký CSV
+  SystemCommandRunner.cs      Chạy tiến trình với thời gian chờ
+  Abstractions.cs             Interface phục vụ kiểm thử an toàn
+  Models.cs                   Các kiểu dữ liệu
 tests/CompanyUsbFormatter.Tests/
-  Program.cs                  Bo test khong phu thuoc package ngoai
-build.ps1                     Test va publish EXE
+  Program.cs                  Bộ kiểm thử không phụ thuộc gói bên ngoài
+build.ps1                     Kiểm thử và xuất bản EXE
 ```
 
-## Build
+## Biên dịch
 
-Yeu cau may build:
+Yêu cầu đối với máy biên dịch:
 
 - Windows
-- .NET 8 SDK hoac moi hon
+- .NET 8 SDK hoặc mới hơn
 
-Chay:
+Chạy:
 
 ```powershell
 Set-ExecutionPolicy -Scope Process Bypass
 .\build.ps1
 ```
 
-EXE duoc tao tai:
+File EXE được tạo tại:
 
 ```text
 dist\win-x64\CompanyUsbFormatter.exe
 ```
 
-Day la EXE `win-x64` self-contained, single-file. May dich khong can cai .NET runtime rieng.
+Đây là file EXE `win-x64`, self-contained và single-file. Máy đích không cần cài đặt riêng .NET Runtime.
 
-Chay rieng test:
+Chạy riêng bộ kiểm thử:
 
 ```powershell
 dotnet run --project tests\CompanyUsbFormatter.Tests\CompanyUsbFormatter.Tests.csproj -c Release
 ```
 
-## Trien khai cong ty
+## Triển khai trong công ty
 
-Ban build mac dinh chua duoc ky so. Windows SmartScreen hoac EDR co the canh bao voi EXE noi bo chua ky. Truoc khi trien khai rong:
+Bản dựng mặc định chưa được ký số. Windows SmartScreen hoặc EDR có thể cảnh báo đối với file EXE nội bộ chưa ký. Trước khi triển khai rộng:
 
-1. Ky Authenticode bang chung thu code-signing cua cong ty.
-2. Kiem tra hash SHA-256 sau khi ky.
-3. Phan phoi qua Intune, SCCM hoac kenh quan ly phan mem duoc phe duyet.
-4. Gioi han cong cu cho nhom ky thuat vien duoc cap quyen local Administrator.
+1. Ký Authenticode bằng chứng thư code-signing của công ty.
+2. Kiểm tra mã băm SHA-256 sau khi ký.
+3. Phân phối qua Intune, SCCM hoặc kênh quản lý phần mềm được phê duyệt.
+4. Chỉ cấp công cụ cho nhóm kỹ thuật viên có quyền Administrator cục bộ.
 
-Vi du ky so:
+Ví dụ ký số:
 
 ```powershell
 signtool sign /fd SHA256 /tr http://timestamp.digicert.com /td SHA256 /a .\dist\win-x64\CompanyUsbFormatter.exe
 ```
 
-Can thay URL timestamp va cach chon certificate theo chinh sach PKI cua cong ty.
+Cần thay URL timestamp và cách chọn certificate theo chính sách PKI của công ty.
