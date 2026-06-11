@@ -103,20 +103,3 @@ Chạy riêng bộ kiểm thử:
 ```powershell
 dotnet run --project tests\CompanyUsbFormatter.Tests\CompanyUsbFormatter.Tests.csproj -c Release
 ```
-
-## Triển khai trong công ty
-
-Bản dựng mặc định chưa được ký số. Windows SmartScreen hoặc EDR có thể cảnh báo đối với file EXE nội bộ chưa ký. Trước khi triển khai rộng:
-
-1. Ký Authenticode bằng chứng thư code-signing của công ty.
-2. Kiểm tra mã băm SHA-256 sau khi ký.
-3. Phân phối qua Intune, SCCM hoặc kênh quản lý phần mềm được phê duyệt.
-4. Chỉ cấp công cụ cho nhóm kỹ thuật viên có quyền Administrator cục bộ.
-
-Ví dụ ký số:
-
-```powershell
-signtool sign /fd SHA256 /tr http://timestamp.digicert.com /td SHA256 /a .\dist\win-x64\CompanyUsbFormatter.exe
-```
-
-Cần thay URL timestamp và cách chọn certificate theo chính sách PKI của công ty.
