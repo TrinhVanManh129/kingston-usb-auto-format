@@ -1,6 +1,6 @@
 # Kingston USB Auto Format
 
-Công cụ Windows dành cho kỹ thuật viên, dùng để định dạng USB thành `exFAT` theo quy trình có xác nhận và ghi nhật ký.
+Công cụ Windows có giao diện đồ họa dành cho kỹ thuật viên, dùng để định dạng USB thành `exFAT` theo quy trình có xác nhận và ghi nhật ký.
 
 > **CẢNH BÁO:** Thao tác định dạng sẽ xóa toàn bộ dữ liệu trên USB đã chọn. Công cụ này không thể khôi phục dữ liệu đã xóa.
 
@@ -10,7 +10,7 @@ Công cụ Windows dành cho kỹ thuật viên, dùng để định dạng USB 
 - Chặn tuyệt đối `Disk 0`.
 - Chặn ổ đĩa được Windows đánh dấu `IsBoot` hoặc `IsSystem`.
 - Chặn ổ đĩa đang ngoại tuyến hoặc có dung lượng không hợp lệ.
-- Bắt buộc kỹ thuật viên nhập số ổ đĩa, sau đó nhập chính xác `FORMAT <số ổ đĩa>`.
+- Bắt buộc kỹ thuật viên chọn USB và nhập lại chính xác số `Disk` trước khi nút định dạng được bật.
 - Đọc lại thông tin thiết bị sau khi xác nhận và hủy nếu model, serial, Windows Unique ID hoặc dung lượng thay đổi.
 - Không tự động định dạng khi cắm USB.
 - Không có tham số bỏ qua bước xác nhận.
@@ -20,10 +20,11 @@ Công cụ Windows dành cho kỹ thuật viên, dùng để định dạng USB 
 
 1. Mở `CompanyUsbFormatter.exe`.
 2. Chấp nhận hộp thoại yêu cầu quyền Administrator của Windows.
-3. Kiểm tra kỹ model, serial và dung lượng của USB.
-4. Nhập số ổ đĩa được hiển thị.
-5. Nhập chính xác chuỗi xác nhận, ví dụ `FORMAT 1`.
-6. Chờ đến khi chương trình báo thành công và hiển thị ký tự ổ đĩa.
+3. Chọn USB trong bảng thiết bị.
+4. Kiểm tra kỹ model, serial, dung lượng và ổ đĩa hiện tại.
+5. Nhập lại số `Disk` vào ô xác nhận, ví dụ `1`.
+6. Nhấn **FORMAT USB** và xác nhận cảnh báo cuối cùng.
+7. Chờ đến khi chương trình báo thành công và hiển thị ký tự ổ đĩa.
 
 Kết quả mặc định:
 
@@ -63,6 +64,7 @@ Nhật ký gồm thời gian UTC, tên máy, tài khoản Windows, số ổ đĩ
 ```text
 src/CompanyUsbFormatter/
   Program.cs                  Điểm khởi chạy và ghép các thành phần
+  MainForm.cs                 Giao diện WinForms và luồng thao tác
   UsbFormattingWorkflow.cs    Luồng chọn, xác nhận, định dạng và xác minh
   DiskSafetyValidator.cs      Quy tắc chống xóa nhầm ổ đĩa
   PowerShellDiskInventory.cs  Đọc thông tin ổ đĩa từ Windows

@@ -70,12 +70,12 @@ public sealed class UsbFormattingWorkflow
         _console.WriteLine(string.Empty);
         _console.WriteLine("WARNING: ALL DATA ON THIS USB DISK WILL BE DESTROYED.");
         _console.WriteLine(Describe(selected!));
-        _console.WriteLine($"Type exactly FORMAT {diskNumber} to continue:");
+        _console.WriteLine($"Enter disk number {diskNumber} again to continue:");
         var confirmation = _console.ReadLine();
-        if (!string.Equals(confirmation, $"FORMAT {diskNumber}", StringComparison.Ordinal))
+        if (!string.Equals(confirmation?.Trim(), diskNumber.ToString(), StringComparison.Ordinal))
         {
             _console.WriteLine("Operation cancelled.");
-            await LogAsync(selected, "CANCELLED", string.Empty, "Confirmation text did not match.", cancellationToken);
+            await LogAsync(selected, "CANCELLED", string.Empty, "Confirmation disk number did not match.", cancellationToken);
             return CancelledExitCode;
         }
 

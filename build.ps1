@@ -33,6 +33,8 @@ dotnet publish (Join-Path $root 'src\CompanyUsbFormatter\CompanyUsbFormatter.csp
     -p:DebugType=None `
     -p:DebugSymbols=false `
     -p:PublishTrimmed=false `
+    -p:EnableCompressionInSingleFile=true `
+    -p:IncludeNativeLibrariesForSelfExtract=true `
     -o $output
 
 if ($LASTEXITCODE -ne 0) {

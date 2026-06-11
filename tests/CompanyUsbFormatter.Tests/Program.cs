@@ -13,7 +13,8 @@ var tests = new (string Name, Action Run)[]
     ("detects replaced disk identity", DetectsReplacedIdentity),
     ("detects changed unique disk identity", DetectsChangedUniqueIdentity),
     ("rejects an invalid disk selection", () => RejectsInvalidSelection().GetAwaiter().GetResult()),
-    ("requires exact confirmation text", () => RequiresExactConfirmation().GetAwaiter().GetResult()),
+    ("rejects a different confirmation disk number", () => RejectsDifferentConfirmationDiskNumber().GetAwaiter().GetResult()),
+    ("accepts the repeated disk number confirmation", () => AcceptsRepeatedDiskNumberConfirmation().GetAwaiter().GetResult()),
     ("detects device replacement before formatting", () => DetectsReplacementBeforeFormatting().GetAwaiter().GetResult()),
     ("reports formatter failure", () => ReportsFormatterFailure().GetAwaiter().GetResult()),
     ("reports verification failure", () => ReportsVerificationFailure().GetAwaiter().GetResult()),
@@ -129,16 +130,33 @@ static async Task RejectsInvalidSelection()
     False(formatter.WasCalled);
 }
 
-static async Task RequiresExactConfirmation()
+static async Task RejectsDifferentConfirmationDiskNumber()
 {
     var formatter = new FakeFormatter();
     var workflow = Workflow(
         new FakeInventory(new[] { Disk() }, Disk()),
         formatter,
-        new FakeConsole("1", "format 1"));
+        new FakeConsole("1", "2"));
 
     Equal(UsbFormattingWorkflow.CancelledExitCode, await workflow.RunAsync());
     False(formatter.WasCalled);
+}
+
+static async Task AcceptsRepeatedDiskNumberConfirmation()
+{
+    var formatted = Disk() with
+    {
+        PartitionStyle = "MBR",
+        Volumes = new[] { new VolumeInfo("F", "exFAT", "COMPANY-USB", 63_000_000_000) },
+    };
+    var formatter = new FakeFormatter();
+    var workflow = Workflow(
+        new FakeInventory(new[] { Disk() }, Disk(), Disk(), formatted),
+        formatter,
+        new FakeConsole("1", "1"));
+
+    Equal(UsbFormattingWorkflow.SuccessExitCode, await workflow.RunAsync());
+    True(formatter.WasCalled);
 }
 
 static async Task DetectsReplacementBeforeFormatting()
@@ -147,7 +165,7 @@ static async Task DetectsReplacementBeforeFormatting()
     var workflow = Workflow(
         new FakeInventory(new[] { Disk() }, Disk(), Disk(serial: "REPLACED")),
         formatter,
-        new FakeConsole("1", "FORMAT 1"));
+        new FakeConsole("1", "1"));
 
     Equal(UsbFormattingWorkflow.SafetyRejectedExitCode, await workflow.RunAsync());
     False(formatter.WasCalled);
@@ -159,7 +177,7 @@ static async Task ReportsFormatterFailure()
     var workflow = Workflow(
         new FakeInventory(new[] { Disk() }, Disk(), Disk()),
         formatter,
-        new FakeConsole("1", "FORMAT 1"));
+        new FakeConsole("1", "1"));
 
     Equal(UsbFormattingWorkflow.FormatFailedExitCode, await workflow.RunAsync());
     True(formatter.WasCalled);
@@ -171,7 +189,7 @@ static async Task ReportsVerificationFailure()
     var workflow = Workflow(
         new FakeInventory(new[] { Disk() }, Disk(), Disk(), Disk()),
         formatter,
-        new FakeConsole("1", "FORMAT 1"));
+        new FakeConsole("1", "1"));
 
     Equal(UsbFormattingWorkflow.VerificationFailedExitCode, await workflow.RunAsync());
 }
@@ -188,7 +206,7 @@ static async Task CompletesVerifiedFormat()
     var workflow = Workflow(
         new FakeInventory(new[] { Disk() }, Disk(), Disk(), formatted),
         formatter,
-        new FakeConsole("1", "FORMAT 1"),
+        new FakeConsole("1", "1"),
         logger);
 
     Equal(UsbFormattingWorkflow.SuccessExitCode, await workflow.RunAsync());
