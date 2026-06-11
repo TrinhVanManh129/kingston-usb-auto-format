@@ -23,6 +23,7 @@ public sealed class MainForm : Form
     private readonly RadioButton _ntfsOption = new();
     private readonly RadioButton _fat32Option = new();
     private readonly Label _fileSystemNote = new();
+    private readonly CheckBox _writeLogOption = new();
     private readonly Label _selectedTitle = new();
     private readonly Label _selectedDetails = new();
     private readonly Label _selectionBadge = new();
@@ -36,7 +37,7 @@ public sealed class MainForm : Form
         var runner = new SystemCommandRunner();
         _inventory = new PowerShellDiskInventory(runner);
         _formatter = new DiskPartFormatter(runner, new TemporaryFileStore());
-        _logger = new AuditLogger();
+        _logger = new OptionalAuditLogger(new AuditLogger(), () => _writeLogOption.Checked);
 
         Text = "Kingston USB Formatter";
         StartPosition = FormStartPosition.CenterScreen;
@@ -256,13 +257,31 @@ public sealed class MainForm : Form
         action.Controls.Add(_fileSystemNote);
         UpdateFileSystemNote();
 
+        _writeLogOption.AutoSize = true;
+        _writeLogOption.Text = "Write audit log (CSV)";
+        _writeLogOption.Checked = false;
+        _writeLogOption.ForeColor = Navy;
+        _writeLogOption.Font = new Font("Segoe UI", 9.5F);
+        _writeLogOption.Location = new Point(0, 221);
+        action.Controls.Add(_writeLogOption);
+
+        var logNote = new Label
+        {
+            AutoSize = true,
+            Text = "Optional. Disabled by default.",
+            ForeColor = Muted,
+            Font = new Font("Segoe UI", 8.5F),
+            Location = new Point(21, 246),
+        };
+        action.Controls.Add(logNote);
+
         var confirmLabel = new Label
         {
             AutoSize = true,
             Text = "Confirm disk number",
             Font = new Font("Segoe UI Semibold", 10F),
             ForeColor = Navy,
-            Location = new Point(0, 222),
+            Location = new Point(0, 276),
         };
         action.Controls.Add(confirmLabel);
         action.Controls.Add(new Label
@@ -270,10 +289,10 @@ public sealed class MainForm : Form
             AutoSize = true,
             Text = "Enter the selected Disk number again.",
             ForeColor = Muted,
-            Location = new Point(0, 249),
+            Location = new Point(0, 303),
         });
 
-        _confirmationBox.Location = new Point(0, 279);
+        _confirmationBox.Location = new Point(0, 333);
         _confirmationBox.Size = new Size(315, 32);
         _confirmationBox.Font = new Font("Segoe UI Semibold", 12F);
         _confirmationBox.TextAlign = HorizontalAlignment.Center;
@@ -282,7 +301,7 @@ public sealed class MainForm : Form
         action.Controls.Add(_confirmationBox);
 
         ConfigureButton(_formatButton, "FORMAT USB", Red);
-        _formatButton.Location = new Point(0, 327);
+        _formatButton.Location = new Point(0, 381);
         _formatButton.Size = new Size(315, 48);
         _formatButton.Enabled = false;
         _formatButton.Click += async (_, _) => await FormatSelectedDiskAsync();

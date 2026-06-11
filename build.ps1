@@ -42,13 +42,13 @@ if ($LASTEXITCODE -ne 0) {
     throw "Publish failed with exit code $LASTEXITCODE."
 }
 
-$exe = Join-Path $output 'KingstonUsbFormatter.exe'
+$exe = Join-Path $output 'KingstonUsbFormatter-v2.3.exe'
 if (-not (Test-Path -LiteralPath $exe)) {
     throw "Published EXE was not found: $exe"
 }
 
 $releaseDirectory = Join-Path $dist 'win-x64'
-$releaseExe = Join-Path $releaseDirectory 'KingstonUsbFormatter.exe'
+$releaseExe = Join-Path $releaseDirectory 'KingstonUsbFormatter-v2.3.exe'
 New-Item -ItemType Directory -Path $releaseDirectory -Force | Out-Null
 Copy-Item -LiteralPath $exe -Destination $releaseExe -Force
 

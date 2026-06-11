@@ -12,6 +12,7 @@ Công cụ Windows có giao diện đồ họa dành cho kỹ thuật viên, dù
 - Chặn ổ đĩa đang ngoại tuyến hoặc có dung lượng không hợp lệ.
 - Bắt buộc kỹ thuật viên chọn USB và nhập lại chính xác số `Disk` trước khi nút định dạng được bật.
 - Cho phép chọn `exFAT`, `NTFS` hoặc `FAT32`; mặc định là `exFAT`.
+- Cho phép bật hoặc tắt ghi nhật ký CSV; mặc định không ghi nhật ký.
 - Đọc lại thông tin thiết bị sau khi xác nhận và hủy nếu model, serial, Windows Unique ID hoặc dung lượng thay đổi.
 - Không tự động định dạng khi cắm USB.
 - Không có tham số bỏ qua bước xác nhận.
@@ -19,7 +20,7 @@ Công cụ Windows có giao diện đồ họa dành cho kỹ thuật viên, dù
 
 ## Cách sử dụng
 
-1. Mở `KingstonUsbFormatter.exe`.
+1. Mở `KingstonUsbFormatter-v2.3.exe`.
 2. Chấp nhận hộp thoại yêu cầu quyền Administrator của Windows.
 3. Chọn USB trong bảng thiết bị.
 4. Kiểm tra kỹ model, serial, dung lượng và ổ đĩa hiện tại.
@@ -28,8 +29,9 @@ Công cụ Windows có giao diện đồ họa dành cho kỹ thuật viên, dù
    - `NTFS`: phù hợp với máy Windows.
    - `FAT32`: dành cho thiết bị cũ, giới hạn mỗi tệp tối đa 4 GB. Windows có thể từ chối FAT32 trên USB lớn hơn 32 GB.
 6. Nhập lại số `Disk` vào ô xác nhận, ví dụ `1`.
-7. Nhấn **FORMAT USB** và xác nhận cảnh báo cuối cùng.
-8. Chờ đến khi chương trình báo thành công và hiển thị ký tự ổ đĩa.
+7. Chọn **Write audit log (CSV)** nếu cần lưu nhật ký. Tùy chọn này mặc định tắt.
+8. Nhấn **FORMAT USB** và xác nhận cảnh báo cuối cùng.
+9. Chờ đến khi chương trình báo thành công và hiển thị ký tự ổ đĩa.
 
 Kết quả mặc định:
 
@@ -41,7 +43,7 @@ Kết quả mặc định:
 
 ## Nhật ký
 
-Nhật ký CSV được ghi theo từng tháng tại:
+Khi bật **Write audit log (CSV)**, nhật ký được ghi theo từng tháng tại:
 
 ```text
 %ProgramData%\CompanyUsbFormatter\Logs\YYYY-MM.csv
@@ -100,7 +102,7 @@ Set-ExecutionPolicy -Scope Process Bypass
 File EXE được tạo tại:
 
 ```text
-dist\win-x64\KingstonUsbFormatter.exe
+dist\win-x64\KingstonUsbFormatter-v2.3.exe
 ```
 
 Đây là file EXE `win-x64`, self-contained và single-file. Máy đích không cần cài đặt riêng .NET Runtime.

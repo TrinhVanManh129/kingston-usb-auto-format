@@ -26,6 +26,8 @@ var tests = new (string Name, Action Run)[]
     ("rejects unsupported file system", RejectsUnsupportedFileSystem),
     ("deletes DiskPart temporary script after failure", () => DeletesTemporaryScriptAfterFailure().GetAwaiter().GetResult()),
     ("escapes CSV audit fields", EscapesCsvAuditFields),
+    ("disabled audit logger does not write", () => DisabledAuditLoggerDoesNotWrite().GetAwaiter().GetResult()),
+    ("enabled audit logger writes", () => EnabledAuditLoggerWrites().GetAwaiter().GetResult()),
 };
 
 var failures = new List<string>();
@@ -305,6 +307,41 @@ static void EscapesCsvAuditFields()
 {
     Equal("\"value,with \"\"quotes\"\"\"", AuditLogger.EscapeCsv("value,with \"quotes\""));
     Equal("plain", AuditLogger.EscapeCsv("plain"));
+}
+
+static async Task DisabledAuditLoggerDoesNotWrite()
+{
+    var inner = new FakeLogger();
+    var logger = new OptionalAuditLogger(inner, () => false);
+
+    await logger.LogAsync(Audit(), CancellationToken.None);
+
+    Equal(0, inner.Records.Count);
+}
+
+static async Task EnabledAuditLoggerWrites()
+{
+    var inner = new FakeLogger();
+    var logger = new OptionalAuditLogger(inner, () => true);
+
+    await logger.LogAsync(Audit(), CancellationToken.None);
+
+    Equal(1, inner.Records.Count);
+}
+
+static AuditRecord Audit()
+{
+    return new AuditRecord(
+        DateTimeOffset.UtcNow,
+        "PC",
+        "USER",
+        1,
+        "USB",
+        "SERIAL",
+        64_000_000_000,
+        "SUCCESS",
+        "F",
+        "done");
 }
 
 static UsbFormattingWorkflow Workflow(

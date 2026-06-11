@@ -2,6 +2,25 @@ using System.Text;
 
 namespace CompanyUsbFormatter;
 
+public sealed class OptionalAuditLogger : IAuditLogger
+{
+    private readonly IAuditLogger _inner;
+    private readonly Func<bool> _isEnabled;
+
+    public OptionalAuditLogger(IAuditLogger inner, Func<bool> isEnabled)
+    {
+        _inner = inner;
+        _isEnabled = isEnabled;
+    }
+
+    public Task LogAsync(AuditRecord record, CancellationToken cancellationToken)
+    {
+        return _isEnabled()
+            ? _inner.LogAsync(record, cancellationToken)
+            : Task.CompletedTask;
+    }
+}
+
 public sealed class AuditLogger : IAuditLogger
 {
     private const string Header =
