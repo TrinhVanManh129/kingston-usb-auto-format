@@ -18,7 +18,7 @@ Công cụ Windows có giao diện đồ họa dành cho kỹ thuật viên, dù
 
 ## Cách sử dụng
 
-1. Mở `CompanyUsbFormatter.exe`.
+1. Mở `KingstonUsbFormatter.exe`.
 2. Chấp nhận hộp thoại yêu cầu quyền Administrator của Windows.
 3. Chọn USB trong bảng thiết bị.
 4. Kiểm tra kỹ model, serial, dung lượng và ổ đĩa hiện tại.
@@ -95,7 +95,7 @@ Set-ExecutionPolicy -Scope Process Bypass
 File EXE được tạo tại:
 
 ```text
-dist\win-x64\CompanyUsbFormatter.exe
+dist\win-x64\KingstonUsbFormatter.exe
 ```
 
 Đây là file EXE `win-x64`, self-contained và single-file. Máy đích không cần cài đặt riêng .NET Runtime.

@@ -21,8 +21,10 @@ public sealed class MainForm : Form
     private readonly TextBox _confirmationBox = new();
     private readonly Label _selectedTitle = new();
     private readonly Label _selectedDetails = new();
+    private readonly Label _selectionBadge = new();
     private readonly Label _statusLabel = new();
     private readonly ProgressBar _progress = new();
+    private RoundedPanel? _actionCard;
     private DiskInfo? _selectedDisk;
 
     public MainForm()
@@ -150,8 +152,9 @@ public sealed class MainForm : Form
         _diskGrid.ColumnHeadersDefaultCellStyle.BackColor = Color.FromArgb(239, 243, 249);
         _diskGrid.ColumnHeadersDefaultCellStyle.ForeColor = Navy;
         _diskGrid.ColumnHeadersDefaultCellStyle.Font = new Font("Segoe UI Semibold", 9.5F);
-        _diskGrid.DefaultCellStyle.SelectionBackColor = Color.FromArgb(225, 235, 255);
-        _diskGrid.DefaultCellStyle.SelectionForeColor = Navy;
+        _diskGrid.DefaultCellStyle.SelectionBackColor = Blue;
+        _diskGrid.DefaultCellStyle.SelectionForeColor = Color.White;
+        _diskGrid.DefaultCellStyle.Font = new Font("Segoe UI", 9.5F);
         _diskGrid.GridColor = Border;
         _diskGrid.Columns.Add(Column("Disk", "DiskNumber", 70));
         _diskGrid.Columns.Add(Column("Device", "Device", 280));
@@ -159,6 +162,13 @@ public sealed class MainForm : Form
         _diskGrid.Columns.Add(Column("Serial", "Serial", 180));
         _diskGrid.Columns.Add(Column("Current volume", "Volume", 190));
         _diskGrid.SelectionChanged += (_, _) => SelectCurrentDisk();
+        _diskGrid.CellClick += (_, eventArgs) =>
+        {
+            if (eventArgs.RowIndex >= 0)
+            {
+                SelectCurrentDisk();
+            }
+        };
         layout.Controls.Add(_diskGrid, 0, 1);
         return panel;
     }
@@ -166,6 +176,7 @@ public sealed class MainForm : Form
     private Control BuildActionPanel()
     {
         var panel = CreateCard();
+        _actionCard = (RoundedPanel)panel;
         panel.Margin = new Padding(0, 16, 0, 0);
         var layout = new TableLayoutPanel
         {
@@ -184,12 +195,19 @@ public sealed class MainForm : Form
         _selectedTitle.Font = new Font("Segoe UI Semibold", 14F);
         _selectedTitle.ForeColor = Navy;
         _selectedTitle.Location = new Point(0, 0);
+        _selectionBadge.AutoSize = true;
+        _selectionBadge.Text = "NO DRIVE SELECTED";
+        _selectionBadge.Font = new Font("Segoe UI Semibold", 8.5F);
+        _selectionBadge.ForeColor = Muted;
+        _selectionBadge.BackColor = Color.FromArgb(232, 236, 242);
+        _selectionBadge.Padding = new Padding(9, 5, 9, 5);
+        _selectionBadge.Location = new Point(0, 37);
         _selectedDetails.Text = "Choose a device from the table above to review its identity.";
         _selectedDetails.AutoSize = false;
         _selectedDetails.Size = new Size(430, 55);
         _selectedDetails.Font = new Font("Segoe UI", 9.5F);
         _selectedDetails.ForeColor = Muted;
-        _selectedDetails.Location = new Point(2, 42);
+        _selectedDetails.Location = new Point(2, 73);
         var warning = new Label
         {
             AutoSize = false,
@@ -198,10 +216,11 @@ public sealed class MainForm : Form
             ForeColor = Color.FromArgb(145, 42, 42),
             BackColor = Color.FromArgb(255, 239, 239),
             Padding = new Padding(14, 11, 14, 10),
-            Location = new Point(0, 103),
-            Size = new Size(430, 58),
+            Location = new Point(0, 130),
+            Size = new Size(430, 42),
         };
         details.Controls.Add(_selectedTitle);
+        details.Controls.Add(_selectionBadge);
         details.Controls.Add(_selectedDetails);
         details.Controls.Add(warning);
         layout.Controls.Add(details, 0, 0);
@@ -272,21 +291,25 @@ public sealed class MainForm : Form
             _confirmationBox.Clear();
             _confirmationBox.Enabled = false;
             _diskGrid.DataSource = disks.Select(disk => new DiskRow(disk)).ToArray();
+            _diskGrid.ClearSelection();
+            _diskGrid.CurrentCell = null;
             _selectedTitle.Text = disks.Length == 0 ? "No USB drive detected" : "Select a USB drive";
+            _selectionBadge.Text = disks.Length == 0 ? "NO USB DETECTED" : "NO DRIVE SELECTED";
+            _selectionBadge.ForeColor = Muted;
+            _selectionBadge.BackColor = Color.FromArgb(232, 236, 242);
+            if (_actionCard is not null)
+            {
+                _actionCard.BorderColor = Border;
+                _actionCard.BorderWidth = 1;
+                _actionCard.Invalidate();
+            }
             _selectedDetails.Text = disks.Length == 0
                 ? "Connect a removable USB drive, then select Refresh."
-                : "Choose a device from the table above to review its identity.";
+                : "Click a row above. The selected row will turn blue.";
             _statusLabel.Text = disks.Length == 0
                 ? "No USB drives detected"
                 : $"{disks.Length} USB drive{(disks.Length == 1 ? string.Empty : "s")} detected";
 
-            if (disks.Length > 0 && _diskGrid.Rows.Count > 0)
-            {
-                _diskGrid.CurrentCell = _diskGrid.Rows[0].Cells[0];
-                _diskGrid.Rows[0].Selected = true;
-                SelectCurrentDisk();
-                BeginInvoke(() => _confirmationBox.Focus());
-            }
         }
         catch (Exception exception)
         {
@@ -307,6 +330,15 @@ public sealed class MainForm : Form
 
         _selectedDisk = row.Disk;
         _selectedTitle.Text = $"Disk {row.Disk.Number} · {row.Disk.FriendlyName}";
+        _selectionBadge.Text = $"SELECTED: DISK {row.Disk.Number}";
+        _selectionBadge.ForeColor = Color.White;
+        _selectionBadge.BackColor = Blue;
+        if (_actionCard is not null)
+        {
+            _actionCard.BorderColor = Blue;
+            _actionCard.BorderWidth = 2;
+            _actionCard.Invalidate();
+        }
         _selectedDetails.Text =
             $"{row.Capacity}  |  Serial: {Display(row.Disk.SerialNumber)}\r\n" +
             $"Current volume: {row.Volume}";
@@ -513,6 +545,8 @@ internal sealed class RoundedPanel : Panel
 
     public Color BorderColor { get; set; } = Color.LightGray;
 
+    public int BorderWidth { get; set; } = 1;
+
     protected override void OnPaint(PaintEventArgs e)
     {
         base.OnPaint(e);
@@ -521,7 +555,7 @@ internal sealed class RoundedPanel : Panel
         rectangle.Width -= 1;
         rectangle.Height -= 1;
         using var path = CreateRoundedRectangle(rectangle, CornerRadius);
-        using var pen = new Pen(BorderColor);
+        using var pen = new Pen(BorderColor, BorderWidth);
         Region = new Region(path);
         e.Graphics.DrawPath(pen, path);
     }

@@ -41,7 +41,7 @@ if ($LASTEXITCODE -ne 0) {
     throw "Publish failed with exit code $LASTEXITCODE."
 }
 
-$exe = Join-Path $output 'CompanyUsbFormatter.exe'
+$exe = Join-Path $output 'KingstonUsbFormatter.exe'
 if (-not (Test-Path -LiteralPath $exe)) {
     throw "Published EXE was not found: $exe"
 }

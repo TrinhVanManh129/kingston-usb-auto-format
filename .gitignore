@@ -2,3 +2,4 @@
 **/obj/
 Logs/
 *.user
+dist/win-x64/CompanyUsbFormatter.exe
